@@ -47,7 +47,7 @@ def process_file(txt_in, stdf_out):
     current_header_name = None
 
 
-    def do_one_record(header_name, list_of_kv_tuple):
+    def do_one_record(header_name, list_of_kv_tuple, fout):
         """given the header name and lines of key/values pairs,
         to return bytes of data to be dumped into file """
         print(list_of_kv_tuple)
@@ -58,26 +58,46 @@ def process_file(txt_in, stdf_out):
         inst = name_to_instance_map[header_name]
         total_size = 0
         vals = []
+        fmts = []  # collect fmt for packing
+
+        # collect total size for REC_LEN
         for field, datatype_code in inst.fieldMap:
             est_size = known_size(datatype_code)
             if est_size:
                 total_size += est_size
 
+
+        # collect header ( rec_len, rec_type, rec_sub )
+        header = (total_size ,)
+        header += type_and_sub
+        print("header : {}".format(header))
+        print("fieldStdfTypes : {}".format(inst.fieldStdfTypes))
+        # collect head formats for packing
+        fmts.append(packFormatMap["U2"])
+        fmts.append(packFormatMap["U1"])
+        fmts.append(packFormatMap["U1"])
+        head_fmt = "".join(fmts)
+        print("head_fmt : {}".format(head_fmt))
+
+        s = struct.Struct(head_fmt)
+        packed_data = s.pack(*header)
+        fout.write()
+
+
+        # collect all values for packing
         for tpl in list_of_kv_tuple:
             print(tpl)
             k, v = tpl
             vals.append(v)
-
-        print(vals)
-        # dump header ( rec_len, rec_type, rec_sub )
-        header = (total_size ,)
-        header += type_and_sub
-        print("header {}".format(header))
         values = tuple(vals)
-        print("values {}".format(values))
+        print("values : {}".format(values))
 
+        # collect values formats for packing
+        fmts = []
+        for datatype in inst.fieldStdfTypes:
+            fmts.append(packFormatMap[datatype])
 
-
+        #s = struct.Struct('I 2s f')
 
         #s = struct.Struct()
         #packed_data = s.pack(*values)
@@ -118,7 +138,7 @@ def process_file(txt_in, stdf_out):
 
                             # dump one record, avoid first FAR record without any kv in the one_record_content
                             if new_header_name != current_header_name:
-                                bytes = do_one_record(current_header_name, one_record_content)
+                                bytes = do_one_record(current_header_name, one_record_content, fout)
 
                             # reset to refill
                             current_header_name = new_header_name
