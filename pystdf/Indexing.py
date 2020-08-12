@@ -47,6 +47,9 @@ class RecordIndexer:
   def before_send(self, dataSource, data):
     self.recid += 1
 
+  def after_complete(self, dataSource):
+    print(f"Total records: {self.recid}")
+
 class MaterialIndexer:
   def getCurrentWafer(self, head):
     return self.currentWafer.get(head, 0)

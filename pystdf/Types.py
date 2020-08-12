@@ -6,12 +6,12 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -68,16 +68,16 @@ class RecordHeader:
     self.len=0
     self.typ=0
     self.sub=0
-  
+
   def __repr__(self):
-    return "<STDF Header, REC_TYP=%d REC_SUB=%d REC_LEN=%d>" % (self.typ, self.sub, self.len) 
+    return "<STDF Header, REC_TYP=%d REC_SUB=%d REC_LEN=%d>" % (self.typ, self.sub, self.len)
 
 class RecordType(TableTemplate):
   def __init__(self):
-    TableTemplate.__init__(self, 
-      [name for name, stdfType in self.fieldMap], 
+    TableTemplate.__init__(self,
+      [name for name, stdfType in self.fieldMap],
       [stdfToLogicalType(stdfTyp) for name, stdfTyp in self.fieldMap])
-  
+
 class UnknownRecord(TableTemplate):
   def __init__(self, rec_typ, rec_sub):
     TableTemplate.__init__(self, [], [], 'UnknownRecord')
@@ -91,7 +91,7 @@ class EndOfRecordException(Exception): pass
 class InitialSequenceException(Exception): pass
 
 class StdfRecordMeta(type):
-  """Generate the necessary plumbing for STDF record classes 
+  """Generate the necessary plumbing for STDF record classes
   based on simple, static field defintions.
   This enables a simple, mini-DSL (domain-specific language)
   approach to defining STDF records.
@@ -100,7 +100,7 @@ class StdfRecordMeta(type):
   able to easily define their own custom STDF record types.
   """
   def __init__(cls, name, bases, dct):
-    
+
     # Map out field definitions
     fieldMap = dct.get('fieldMap', [])
     for i, fieldDef in enumerate(fieldMap):
@@ -108,10 +108,9 @@ class StdfRecordMeta(type):
     setattr(cls, 'fieldFormats', dict(fieldMap))
     setattr(cls, 'fieldNames', [field_name for field_name, field_type in fieldMap])
     setattr(cls, 'fieldStdfTypes', [field_type for field_name, field_type in fieldMap])
-    
+
     # Add initializer for the generated class
     setattr(cls, '__init__', lambda _self: RecordType.__init__(_self))
-    
+
     # Proceed with class generation
     return super(StdfRecordMeta, cls).__init__(name, bases, dct)
-    
